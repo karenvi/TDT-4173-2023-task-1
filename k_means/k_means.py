@@ -1,15 +1,23 @@
 import numpy as np 
 import pandas as pd 
+import matplotlib.pyplot as plt 
+import seaborn as sns 
+# import k_means as km # <-- Your implementation
+
+sns.set_style('darkgrid')
 # IMPORTANT: DO NOT USE ANY OTHER 3RD PARTY PACKAGES
 # (math, random, collections, functools, etc. are perfectly fine)
 
 
 class KMeans:
     
-    def __init__():
+    def __init__(self, k=2, max_iters=100, tolerance=1e-4):
         # NOTE: Feel free add any hyperparameters 
         # (with defaults) as you see fit
-        pass
+        self.k = k
+        self.max_iters = max_iters
+        self.tolerance = tolerance
+        self.centroids = None
         
     def fit(self, X):
         """
@@ -20,7 +28,20 @@ class KMeans:
                 m rows (#samples) and n columns (#features)
         """
         # TODO: Implement
-        raise NotImplemented()
+        X_np = X.values
+        random_idxs = np.random.choice(X_np.shape[0], self.k, replace=False)
+        self.centroids = X_np[random_idxs]
+
+        for _ in range(self.max_iters):
+            distances = cross_euclidean_distance(X_np, self.centroids)
+            labels = np.argmin(distances, axis=1)
+
+            new_centroids = np.array([X_np[labels == i].mean(axis=0) for i in range(self.k)])
+
+            if np.all(np.abs(new_centroids - self.centroids) < self.tolerance):
+                break
+
+            self.centroids = new_centroids
     
     def predict(self, X):
         """
@@ -39,7 +60,10 @@ class KMeans:
             could be: array([2, 0, 0, 1, 2, 1, 1, 0, 2, 2])
         """
         # TODO: Implement 
-        raise NotImplemented()
+        X_np = X.values
+        distances = cross_euclidean_distance(X_np, self.centroids)
+        return np.argmin(distances, axis=1)
+
     
     def get_centroids(self):
         """
@@ -56,7 +80,7 @@ class KMeans:
             [xm_1, xm_2, ..., xm_n]
         ])
         """
-        pass
+        return self.centroids
     
     
     
@@ -111,7 +135,7 @@ def euclidean_distortion(X, z):
     for i, c in enumerate(clusters):
         Xc = X[z == c]
         mu = Xc.mean(axis=0)
-        distortion += ((Xc - mu) ** 2).sum(axis=1)
+        distortion += ((Xc - mu) ** 2).sum()
         
     return distortion
 
@@ -154,4 +178,31 @@ def euclidean_silhouette(X, z):
     b = (D + inf_mask).min(axis=1)
     
     return np.mean((b - a) / np.maximum(a, b))
-  
+
+def main():
+    data_1 = pd.read_csv('data_1.csv')
+    data_1.describe().T
+    plt.figure(figsize=(5, 5))
+    sns.scatterplot(x='x0', y='x1', data=data_1)
+    plt.xlim(0, 1); plt.ylim(0, 1);
+
+    # Fit Model 
+    X = data_1[['x0', 'x1']]
+    model_1 = KMeans() # <-- Should work with default constructor  
+    model_1.fit(X)
+
+    # Compute Silhouette Score 
+    z = model_1.predict(X)
+    print(f'Silhouette Score: {euclidean_silhouette(X, z) :.3f}')
+    print(f'Distortion: {euclidean_distortion(X, z) :.3f}')
+
+    # Plot cluster assignments
+    C = model_1.get_centroids()
+    K = len(C)
+    _, ax = plt.subplots(figsize=(5, 5), dpi=100)
+    sns.scatterplot(x='x0', y='x1', hue=z, hue_order=range(K), palette='tab10', data=X, ax=ax);
+    sns.scatterplot(x=C[:,0], y=C[:,1], hue=range(K), palette='tab10', marker='*', s=250, edgecolor='black', ax=ax)
+    ax.legend().remove();
+    plt.show()
+
+main()
