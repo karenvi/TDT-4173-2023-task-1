@@ -103,4 +103,3 @@ def entropy(counts):
     return - np.sum(probs * np.log2(probs))
 
 
-
