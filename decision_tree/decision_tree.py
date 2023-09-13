@@ -102,4 +102,21 @@ def entropy(counts):
     probs = probs[probs > 0]  # Avoid log(0)
     return - np.sum(probs * np.log2(probs))
 
+def main():
+    # Code from 1.1 in the notebook
+    data_1 = pd.read_csv('data_1.csv')
+    print(data_1)
 
+    # Code from 1.2 in the notebook, removed dt (since I am just using the same file)
+    # Separate independent (X) and dependent (y) variables
+    X = data_1.drop(columns=['Play Tennis'])
+    y = data_1['Play Tennis']
+
+    # Create and fit a Decrision Tree classifier
+    model_1 = DecisionTree()  # <-- Should work with default constructor
+    model_1.fit(X, y)
+
+    # Verify that it perfectly fits the training set
+    print(f'Accuracy: {accuracy(y_true=y, y_pred=model_1.predict(X)) * 100 :.1f}%')
+
+main()
